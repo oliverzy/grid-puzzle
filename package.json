@@ -1,0 +1,24 @@
+{
+  "name": "grid-puzzle",
+  "version": "1.0.0",
+  "description": "",
+  "main": "src/index.js",
+  "scripts": {
+    "dev": "ENV=dev webpack-dev-server",
+    "build": "ENV=dev webpack",
+    "build:prod": "ENV=product webpack"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@tweenjs/tween.js": "^18.5.0",
+    "pixi.js": "^5.2.0"
+  },
+  "devDependencies": {
+    "common-config-webpack-plugin": "^1.4.0",
+    "html-webpack-plugin": "^3.2.0",
+    "webpack": "^4.41.4",
+    "webpack-cli": "^3.3.10",
+    "webpack-dev-server": "^3.10.1"
+  }
+}
