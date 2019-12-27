@@ -3,6 +3,7 @@ import * as PIXI from 'pixi.js';
 import TWEEN from "@tweenjs/tween.js";
 import './main.scss';
 import christmas from './christmas.png';
+import { solve } from './solver';
 
 const app = new PIXI.Application({
   width: 900, height: 900, backgroundColor: 0x1099bb, resolution: window.devicePixelRatio || 1,
@@ -20,6 +21,15 @@ function initGame() {
   const resultDiv = document.createElement('div');
   resultDiv.id = 'result';
   document.body.appendChild(resultDiv);
+  const autoSolveButton = document.createElement('div');
+  autoSolveButton.innerText = '自动完成';
+  autoSolveButton.id = 'solve';
+  autoSolveButton.addEventListener('click', e => {
+    const steps = solve(board);
+    replay(steps);
+  });
+  document.body.appendChild(autoSolveButton);
+
   const container = new PIXI.Container();
   container.sortableChildren = true;
   container.x = 26.5;
@@ -65,19 +75,19 @@ function initGame() {
   }
 }
 
+const DIRECTION = {
+  none: 'none',
+  up: 'up',
+  down: 'down',
+  left: 'left',
+  right: 'right'
+};
+
 /**
  * 处理点击事件
  * @param target 被点击的对象
  */
 function handleClick({target}) {
-  const DIRECTION = {
-    none: 'none',
-    up: 'up',
-    down: 'down',
-    left: 'left',
-    right: 'right'
-  };
-
   function whereToMove() {
     let cx = target.currentXIndex;
     let cy = target.currentYIndex;
@@ -93,70 +103,93 @@ function handleClick({target}) {
     return DIRECTION.none;
   }
 
-  function move(direction) {
-    //console.log('can move:', direction);
-    if (direction === DIRECTION.none)
-      return;
+  const direction =  whereToMove();
+  move(direction, target);
+}
 
-    let cx = target.currentXIndex;
-    let cy = target.currentYIndex;
-    let nx, ny;
-    if (direction === DIRECTION.left) {
-      nx = cx -1;
-      ny = cy;
-    } else if (direction === DIRECTION.right) {
-      nx = cx + 1;
-      ny = cy;
-    } else if (direction === DIRECTION.up) {
-      nx = cx;
-      ny = cy - 1;
-    } else {
-      nx = cx;
-      ny = cy + 1;
-    }
+function move(direction, target, cb) {
+  //console.log('can move:', direction);
+  if (direction === DIRECTION.none)
+    return;
 
-    target.currentXIndex = nx;
-    target.currentYIndex = ny;
-    //target.x = nx*208 + nx*5;
-    //target.y = ny*208 + ny*5;
-    const tween = new TWEEN.Tween(target);
-    tween.to({x: nx*208 + nx*5, y: ny*208 + ny*5}, 300).easing(TWEEN.Easing.Quadratic.Out)
-        .onComplete(() => {
-          checkFinish();
-        });
-    tween.start();
-
-    const empty = board[nx][ny];
-    empty.currentXIndex = cx;
-    empty.currentYIndex = cy;
-    empty.x = cx*208 + cx*5;
-    empty.y = cy*208 + cy*5;
-
-    board[nx][ny] = target;
-    board[cx][cy] = empty;
-  }
-
-  function checkFinish() {
-    let isFinish = true;
+  if (!target) { // 重放场景
+    let emptyX, emptyY;
     for (let i=0;i<board.length;++i) {
       for (let j=0;j<board.length;++j) {
-        if ((board[i][j].originalXIndex !== board[i][j].currentXIndex) ||
-            (board[i][j].originalYIndex !== board[i][j].currentYIndex)) {
-          isFinish = false;
+        if (board[i][j].isEmptyPiece) {
+          emptyX = i;
+          emptyY = j;
           break;
         }
       }
     }
 
-    if (isFinish) {
-      document.getElementById('result').innerText = '恭喜你，拼图已经还原！'
-    } else {
-      document.getElementById('result').innerText = '';
+    if (direction === DIRECTION.left)
+      target = board[emptyX+1][emptyY];
+    else if (direction === DIRECTION.right)
+      target = board[emptyX-1][emptyY];
+    else if (direction === DIRECTION.up)
+      target = board[emptyX][emptyY+1];
+    else
+      target = board[emptyX][emptyY-1];
+  }
+
+  let cx = target.currentXIndex;
+  let cy = target.currentYIndex;
+  let nx, ny;
+  if (direction === DIRECTION.left) {
+    nx = cx -1;
+    ny = cy;
+  } else if (direction === DIRECTION.right) {
+    nx = cx + 1;
+    ny = cy;
+  } else if (direction === DIRECTION.up) {
+    nx = cx;
+    ny = cy - 1;
+  } else {
+    nx = cx;
+    ny = cy + 1;
+  }
+
+  target.currentXIndex = nx;
+  target.currentYIndex = ny;
+  //target.x = nx*208 + nx*5;
+  //target.y = ny*208 + ny*5;
+  const tween = new TWEEN.Tween(target);
+  tween.to({x: nx*208 + nx*5, y: ny*208 + ny*5}, 300).easing(TWEEN.Easing.Quadratic.Out)
+      .onComplete(() => {
+        checkFinish();
+        if (cb) cb();
+      });
+  tween.start();
+
+  const empty = board[nx][ny];
+  empty.currentXIndex = cx;
+  empty.currentYIndex = cy;
+  empty.x = cx*208 + cx*5;
+  empty.y = cy*208 + cy*5;
+
+  board[nx][ny] = target;
+  board[cx][cy] = empty;
+}
+
+function checkFinish() {
+  let isFinish = true;
+  for (let i=0;i<board.length;++i) {
+    for (let j=0;j<board.length;++j) {
+      if ((board[i][j].originalXIndex !== board[i][j].currentXIndex) ||
+          (board[i][j].originalYIndex !== board[i][j].currentYIndex)) {
+        isFinish = false;
+        break;
+      }
     }
   }
 
-  const direction =  whereToMove();
-  move(direction);
+  if (isFinish) {
+    document.getElementById('result').innerText = '恭喜你，拼图已经还原！'
+  } else {
+    document.getElementById('result').innerText = '';
+  }
 }
 
 /**
@@ -174,12 +207,12 @@ function randomPieces() {
       }
     }
 
-    console.log(order, count);
+    console.log('排列：', order, count);
     return count % 2 === 0;
   }
 
-  const newOrder = _.shuffle([0,1,2,3,4,5,6,7,8,9,10,11,12,13,14]);
-  //const newOrder = [0,1,2,3,4,5,6,7,8,9,10,12,11,14,13];
+  //const newOrder = _.shuffle([0,1,2,3,4,5,6,7,8,9,10,11,12,13,14]);
+  const newOrder = [0,1,2,3,4,5,6,7,8,9,10,12,11,14,13];
   if (!isSolvable(newOrder))
     return randomPieces();
 
@@ -207,5 +240,22 @@ function randomPieces() {
   board = newBoard;
 }
 
-initGame();
-randomPieces();
+function replay(steps) {
+  console.log('移动步骤：', steps);
+  function play(index) {
+    if (index === steps.length) return;
+    move(steps[index], null, () => {
+      setTimeout(() => {
+        play(index+1);
+      }, 300);
+    });
+  }
+  play(0);
+}
+
+function main() {
+  initGame();
+  randomPieces();
+}
+
+main();
