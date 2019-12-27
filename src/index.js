@@ -13,21 +13,22 @@ app.ticker.add((delta) => {
   TWEEN.update();
 });
 
-let board = []; // 两位数组，代表整个棋盘, 第一维是列，第二维是行
+let board = []; // 两维数组，代表整个棋盘, 第一维是列，第二维是行
 /**
  * 初始化游戏
  */
 function initGame() {
+  const viewport = document.createElement('meta');
+  viewport.setAttribute('name', 'viewport');
+  viewport.setAttribute('content', 'width=device-width, initial-scale=1.0');
+  document.head.appendChild(viewport);
   const resultDiv = document.createElement('div');
   resultDiv.id = 'result';
   document.body.appendChild(resultDiv);
   const autoSolveButton = document.createElement('div');
   autoSolveButton.innerText = '自动完成';
   autoSolveButton.id = 'solve';
-  autoSolveButton.addEventListener('click', e => {
-    const steps = solve(board);
-    replay(steps);
-  });
+  autoSolveButton.addEventListener('click', autoComplete);
   document.body.appendChild(autoSolveButton);
 
   const container = new PIXI.Container();
@@ -104,35 +105,34 @@ function handleClick({target}) {
   }
 
   const direction =  whereToMove();
-  move(direction, target);
+  move(direction);
 }
 
-function move(direction, target, cb) {
+function move(direction, cb) {
   //console.log('can move:', direction);
   if (direction === DIRECTION.none)
     return;
 
-  if (!target) { // 重放场景
-    let emptyX, emptyY;
-    for (let i=0;i<board.length;++i) {
-      for (let j=0;j<board.length;++j) {
-        if (board[i][j].isEmptyPiece) {
-          emptyX = i;
-          emptyY = j;
-          break;
-        }
+  let emptyX, emptyY;
+  for (let i=0;i<board.length;++i) {
+    for (let j=0;j<board.length;++j) {
+      if (board[i][j].isEmptyPiece) {
+        emptyX = i;
+        emptyY = j;
+        break;
       }
     }
-
-    if (direction === DIRECTION.left)
-      target = board[emptyX+1][emptyY];
-    else if (direction === DIRECTION.right)
-      target = board[emptyX-1][emptyY];
-    else if (direction === DIRECTION.up)
-      target = board[emptyX][emptyY+1];
-    else
-      target = board[emptyX][emptyY-1];
   }
+
+  let target;
+  if (direction === DIRECTION.left)
+    target = board[emptyX+1][emptyY];
+  else if (direction === DIRECTION.right)
+    target = board[emptyX-1][emptyY];
+  else if (direction === DIRECTION.up)
+    target = board[emptyX][emptyY+1];
+  else
+    target = board[emptyX][emptyY-1];
 
   let cx = target.currentXIndex;
   let cy = target.currentYIndex;
@@ -157,10 +157,10 @@ function move(direction, target, cb) {
   //target.y = ny*208 + ny*5;
   const tween = new TWEEN.Tween(target);
   tween.to({x: nx*208 + nx*5, y: ny*208 + ny*5}, 300).easing(TWEEN.Easing.Quadratic.Out)
-      .onComplete(() => {
-        checkFinish();
-        if (cb) cb();
-      });
+    .onComplete(() => {
+      checkFinish();
+      if (cb) cb();
+    });
   tween.start();
 
   const empty = board[nx][ny];
@@ -244,13 +244,18 @@ function replay(steps) {
   console.log('移动步骤：', steps);
   function play(index) {
     if (index === steps.length) return;
-    move(steps[index], null, () => {
+    move(steps[index], () => {
       setTimeout(() => {
         play(index+1);
       }, 300);
     });
   }
   play(0);
+}
+
+function autoComplete() {
+  const steps = solve(board);
+  replay(steps);
 }
 
 function main() {

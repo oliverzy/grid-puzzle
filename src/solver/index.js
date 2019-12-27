@@ -1,3 +1,5 @@
+// TODO：lodash cloneDeep非常慢，需要改用一维数组来表示节点状态
+
 import _ from 'lodash';
 import { aStarPathSearch } from './a-star';
 
@@ -26,7 +28,7 @@ function generateIDFromValue(value) {
   let id = [];
   for (let i=0;i<value.length;++i) {
     for (let j=0;j<value.length;++j) {
-      id.push(value[i][j].ox + value[i][j].oy*value.length)
+      id.push(value[j][i].ox + value[j][i].oy*value.length)
     }
   }
 
@@ -190,6 +192,7 @@ export function solve(board) {
     }
   });
   const t1 = performance.now();
+  console.log('搜索状态数量：', Object.keys(KNOWN_NODES).length);
   console.log(`搜索结果花费了：${t1 - t0}ms`);
   //console.log(path);
   const steps = [];
