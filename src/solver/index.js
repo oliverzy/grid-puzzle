@@ -1,3 +1,5 @@
+// TODO: 实现IDA*算法来搜索十六宫格 
+// https://algorithmsinsight.wordpress.com/graph-theory-2/ida-star-algorithm-in-general/
 import { aStarPathSearch } from './a-star';
 
 // key为Node的ID，用来排除重复节点
@@ -34,7 +36,8 @@ function Node(value, id) {
 
 Node.prototype.getChildren = function () {
   const value = this.value;
-  const emptyIndex = value.findIndex(e => e === 15);
+  const size = Math.sqrt(value.length);
+  const emptyIndex = value.findIndex(e => e === size*size-1);
   function swap(v, i1, i2) {
     const tmp = v[i1];
     v[i1] = v[i2];
@@ -42,32 +45,36 @@ Node.prototype.getChildren = function () {
   }
 
   const children = [];
-  if (![0,4,8,12].includes(emptyIndex)) {
+  let edge = size === 3 ? [0,3,6] : [0,4,8,12]
+  if (!edge.includes(emptyIndex)) {
     let newValue = value.slice();
     swap(newValue, emptyIndex, emptyIndex-1);
     children.push(createNodeFromValue(newValue));
   }
-  if (![3,7,11,15].includes(emptyIndex)) {
+  edge = size === 3 ? [2,5,8] : [3,7,11,15];
+  if (!edge.includes(emptyIndex)) {
     let newValue = value.slice();
     swap(newValue, emptyIndex, emptyIndex+1);
     children.push(createNodeFromValue(newValue));
   }
-  if (![0,1,2,3].includes(emptyIndex)) {
+  edge = size === 3 ? [0,1,2] : [0,1,2,3]
+  if (!edge.includes(emptyIndex)) {
     let newValue = value.slice();
-    swap(newValue, emptyIndex, emptyIndex-4);
+    swap(newValue, emptyIndex, emptyIndex-size);
     children.push(createNodeFromValue(newValue));
   }
-  if (![12,13,14,15].includes(emptyIndex)) {
+  edge = size === 3 ? [6,7,8] : [12,13,14,15];
+  if (!edge.includes(emptyIndex)) {
     let newValue = value.slice();
-    swap(newValue, emptyIndex, emptyIndex+4);
+    swap(newValue, emptyIndex, emptyIndex+size);
     children.push(createNodeFromValue(newValue));
   }
 
   return children;
 };
 
-function createFinalNode() {
-  const value = [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15];
+function createFinalNode(size) {
+  const value = size === 3 ? [0,1,2,3,4,5,6,7,8] : [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15];
   return createNodeFromValue(value);
 }
 
@@ -79,15 +86,16 @@ const DIRECTION = {
 };
 
 function findAction(a, b) {
+  const size = Math.sqrt(a.value.length);
   const aValue = a.value;
-  const emptyAIndex = aValue.findIndex(e => e === 15);
-  const emptyAX = emptyAIndex%4;
-  const emptyAY = Math.floor(emptyAIndex/4);
+  const emptyAIndex = aValue.findIndex(e => e === size*size-1);
+  const emptyAX = emptyAIndex%size;
+  const emptyAY = Math.floor(emptyAIndex/size);
 
   const bValue = b.value;
-  const emptyBIndex = bValue.findIndex(e => e === 15);
-  const emptyBX = emptyBIndex%4;
-  const emptyBY = Math.floor(emptyBIndex/4);
+  const emptyBIndex = bValue.findIndex(e => e === size*size-1);
+  const emptyBX = emptyBIndex%size;
+  const emptyBY = Math.floor(emptyBIndex/size);
 
   if (emptyAX === emptyBX+1)
     return DIRECTION.right;
@@ -107,15 +115,16 @@ export function solve(board) {
   const t0 = performance.now();
   KNOWN_NODES = {};
   const from = createNodeFromBoard(board);
-  const to = createFinalNode();
+  const to = createFinalNode(board.length);
   const path = aStarPathSearch(from, to, {
     heuristic: function (a) {
       let result = 0;
+      const size = board.length;
       for (let k=0;k<a.value.length;++k) {
-        const ox = a.value[k]%4;
-        const oy = Math.floor(a.value[k]/4);
-        const x = k%4;
-        const y = Math.floor(k/4);
+        const ox = a.value[k]%size;
+        const oy = Math.floor(a.value[k]/size);
+        const x = k%size;
+        const y = Math.floor(k/size);
         result += Math.abs(ox-x) + Math.abs(oy-y);
       }
 

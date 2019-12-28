@@ -13,11 +13,15 @@ body {
   color: red;
 }
 
+#size {
+  width: 49%;
+  font-size: 18px;
+}
+
 #solve {
-  display: block;
   text-align: center;
   cursor: pointer;
-  width: 100%;
+  width: 49%;
   font-size: 18px;
   margin-bottom: 5px;
 }

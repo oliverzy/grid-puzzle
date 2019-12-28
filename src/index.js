@@ -6,11 +6,18 @@ import christmas from './christmas.png';
 import { solve } from './solver';
 
 let app; // PIXI.js主游戏对象
-let board = []; // 两维数组，代表整个棋盘, 第一维是列，第二维是行
+let board; // 两维数组，代表整个棋盘, 第一维是列，第二维是行
+let SIZE;
+const PW = {
+  3: 277,
+  4: 208
+};
 /**
  * 初始化游戏
  */
 function initGame() {
+  if (app) app.destroy();
+  board = [];
   app = new PIXI.Application({
     width: 900, height: 900, backgroundColor: 0x1099bb, resolution: window.devicePixelRatio || 1,
     view: document.getElementById('board')
@@ -19,6 +26,11 @@ function initGame() {
     TWEEN.update();
   });
   document.getElementById('solve').addEventListener('click', autoComplete);
+  SIZE = parseInt(document.getElementById('size').value, 10);
+  document.getElementById('size').addEventListener('change', e => {
+    SIZE = parseInt(document.getElementById('size').value, 10);
+    newGame();
+  });
 
   const container = new PIXI.Container();
   container.sortableChildren = true;
@@ -28,8 +40,8 @@ function initGame() {
 
   function createPiece(i, j, texture) {
     const piece = new PIXI.Sprite(texture);
-    piece.x = i*208 + i*5;
-    piece.y = j*208 + j*5;
+    piece.x = i*PW[SIZE] + i*5;
+    piece.y = j*PW[SIZE] + j*5;
     piece.originalXIndex = i;
     piece.originalYIndex = j;
     piece.currentXIndex = i;
@@ -38,13 +50,13 @@ function initGame() {
   }
 
   const baseTexture = PIXI.BaseTexture.from(christmas);
-  for (let i=0;i<4;++i) {
+  for (let i=0;i<SIZE;++i) {
     board[i] = [];
-    for (let j=0;j<4;++j) {
-      if (i === 3 && j === 3) { // 右下角一块特殊处理
+    for (let j=0;j<SIZE;++j) {
+      if (i === SIZE-1 && j === SIZE-1) { // 右下角一块特殊处理
         const rect = new PIXI.Graphics();
         rect.beginFill(0x1099bb);
-        rect.drawRect(0, 0, 208, 208);
+        rect.drawRect(0, 0, PW[SIZE], PW[SIZE]);
         rect.endFill();
         const texture = app.renderer.generateTexture(rect,PIXI.SCALE_MODES.NEAREST, window.devicePixelRatio || 1);
         const piece = createPiece(i, j, texture);
@@ -53,7 +65,7 @@ function initGame() {
         container.addChild(piece);
         board[i][j] = piece;
       } else {
-        const texture = new PIXI.Texture(baseTexture, new PIXI.Rectangle(i*208,j*208, 208, 208));
+        const texture = new PIXI.Texture(baseTexture, new PIXI.Rectangle(i*PW[SIZE],j*PW[SIZE], PW[SIZE], PW[SIZE]));
         const piece = createPiece(i, j, texture);
         piece.interactive = true;
         piece.buttonMode = true;
@@ -145,10 +157,8 @@ function move(direction, cb) {
 
   target.currentXIndex = nx;
   target.currentYIndex = ny;
-  //target.x = nx*208 + nx*5;
-  //target.y = ny*208 + ny*5;
   const tween = new TWEEN.Tween(target);
-  tween.to({x: nx*208 + nx*5, y: ny*208 + ny*5}, 300).easing(TWEEN.Easing.Quadratic.Out)
+  tween.to({x: nx*PW[SIZE] + nx*5, y: ny*PW[SIZE] + ny*5}, 300).easing(TWEEN.Easing.Quadratic.Out)
     .onComplete(() => {
       checkFinish();
       if (cb) cb();
@@ -158,8 +168,8 @@ function move(direction, cb) {
   const empty = board[nx][ny];
   empty.currentXIndex = cx;
   empty.currentYIndex = cy;
-  empty.x = cx*208 + cx*5;
-  empty.y = cy*208 + cy*5;
+  empty.x = cx*PW[SIZE] + cx*5;
+  empty.y = cy*PW[SIZE] + cy*5;
 
   board[nx][ny] = target;
   board[cx][cy] = empty;
@@ -205,28 +215,29 @@ function randomPieces() {
     return count % 2 === 0;
   }
 
-  //const newOrder = _.shuffle([0,1,2,3,4,5,6,7,8,9,10,11,12,13,14]);
-  const newOrder = [0,1,2,3,4,5,6,7,8,9,10,12,11,14,13];
+  const newOrder = SIZE === 3 ? _.shuffle([0,1,2,3,4,5,6,7]) :
+    //_.shuffle([0,1,2,3,4,5,6,7,8,9,10,11,12,13,14]);
+    [0,1,2,3,4,5,6,7,8,9,10,12,11,14,13];
   if (!isSolvable(newOrder))
     return randomPieces();
 
-  newOrder.push(15);
+  newOrder.push(SIZE*SIZE-1);
   const newBoard = [];
   for (let i=0;i<board.length;++i)
     newBoard.push([]);
   let newi = 0;
   let newj = 0;
   for (let k=0;k<newOrder.length;++k) {
-    const i = newOrder[k]%4;
-    const j = Math.floor(newOrder[k]/4);
+    const i = newOrder[k]%SIZE;
+    const j = Math.floor(newOrder[k]/SIZE);
     const piece = board[i][j];
-    piece.x = newi*208 + newi*5;
-    piece.y = newj*208 + newj*5;
+    piece.x = newi*PW[SIZE] + newi*5;
+    piece.y = newj*PW[SIZE] + newj*5;
     piece.currentXIndex = newi;
     piece.currentYIndex = newj;
     newBoard[newi][newj] = piece;
     newi++;
-    if (newi === 4) {
+    if (newi === SIZE) {
       newi = 0;
       newj++;
     }
@@ -237,9 +248,11 @@ function randomPieces() {
 function replay(steps) {
   console.log('移动步骤：', steps);
   document.getElementById('solve').setAttribute('disabled', 'disabled');
+  document.getElementById('size').setAttribute('disabled', 'disabled');
   function play(index) {
     if (index === steps.length) {
       document.getElementById('solve').removeAttribute('disabled');
+      document.getElementById('size').removeAttribute('disabled');
       return;
     }
     move(steps[index], () => {
@@ -256,9 +269,9 @@ function autoComplete() {
   replay(steps);
 }
 
-function main() {
+function newGame() {
   initGame();
   randomPieces();
 }
 
-main();
+newGame();
