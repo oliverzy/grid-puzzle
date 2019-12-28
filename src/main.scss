@@ -3,7 +3,7 @@ body {
   margin: auto;
 }
 
-canvas {
+#board {
   width: 100%;
   height: 100%;
 }
@@ -14,8 +14,10 @@ canvas {
 }
 
 #solve {
+  display: block;
   text-align: center;
-  color: blue;
-  text-decoration: underline;
   cursor: pointer;
+  width: 100%;
+  font-size: 18px;
+  margin-bottom: 5px;
 }

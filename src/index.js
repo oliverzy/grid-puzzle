@@ -236,8 +236,12 @@ function randomPieces() {
 
 function replay(steps) {
   console.log('移动步骤：', steps);
+  document.getElementById('solve').setAttribute('disabled', 'disabled');
   function play(index) {
-    if (index === steps.length) return;
+    if (index === steps.length) {
+      document.getElementById('solve').removeAttribute('disabled');
+      return;
+    }
     move(steps[index], () => {
       setTimeout(() => {
         play(index+1);
