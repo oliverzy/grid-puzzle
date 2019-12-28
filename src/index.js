@@ -5,31 +5,20 @@ import './main.scss';
 import christmas from './christmas.png';
 import { solve } from './solver';
 
-const app = new PIXI.Application({
-  width: 900, height: 900, backgroundColor: 0x1099bb, resolution: window.devicePixelRatio || 1,
-});
-document.body.appendChild(app.view);
-app.ticker.add((delta) => {
-  TWEEN.update();
-});
-
+let app; // PIXI.js主游戏对象
 let board = []; // 两维数组，代表整个棋盘, 第一维是列，第二维是行
 /**
  * 初始化游戏
  */
 function initGame() {
-  const viewport = document.createElement('meta');
-  viewport.setAttribute('name', 'viewport');
-  viewport.setAttribute('content', 'width=device-width, initial-scale=1.0');
-  document.head.appendChild(viewport);
-  const resultDiv = document.createElement('div');
-  resultDiv.id = 'result';
-  document.body.appendChild(resultDiv);
-  const autoSolveButton = document.createElement('div');
-  autoSolveButton.innerText = '自动完成';
-  autoSolveButton.id = 'solve';
-  autoSolveButton.addEventListener('click', autoComplete);
-  document.body.appendChild(autoSolveButton);
+  app = new PIXI.Application({
+    width: 900, height: 900, backgroundColor: 0x1099bb, resolution: window.devicePixelRatio || 1,
+    view: document.getElementById('board')
+  });
+  app.ticker.add((delta) => {
+    TWEEN.update();
+  });
+  document.getElementById('solve').addEventListener('click', autoComplete);
 
   const container = new PIXI.Container();
   container.sortableChildren = true;
@@ -113,16 +102,19 @@ function move(direction, cb) {
   if (direction === DIRECTION.none)
     return;
 
-  let emptyX, emptyY;
-  for (let i=0;i<board.length;++i) {
-    for (let j=0;j<board.length;++j) {
-      if (board[i][j].isEmptyPiece) {
-        emptyX = i;
-        emptyY = j;
-        break;
+  function findEmptyPiece() {
+    let emptyX, emptyY;
+    for (let i=0;i<board.length;++i) {
+      for (let j=0;j<board.length;++j) {
+        if (board[i][j].isEmptyPiece) {
+          emptyX = i;
+          emptyY = j;
+          return {emptyX, emptyY};
+        }
       }
     }
   }
+  const {emptyX, emptyY} = findEmptyPiece();
 
   let target;
   if (direction === DIRECTION.left)
@@ -174,18 +166,20 @@ function move(direction, cb) {
 }
 
 function checkFinish() {
-  let isFinish = true;
-  for (let i=0;i<board.length;++i) {
-    for (let j=0;j<board.length;++j) {
-      if ((board[i][j].originalXIndex !== board[i][j].currentXIndex) ||
-          (board[i][j].originalYIndex !== board[i][j].currentYIndex)) {
-        isFinish = false;
-        break;
+  function isFinish() {
+    for (let i=0;i<board.length;++i) {
+      for (let j=0;j<board.length;++j) {
+        if ((board[i][j].originalXIndex !== board[i][j].currentXIndex) ||
+            (board[i][j].originalYIndex !== board[i][j].currentYIndex)) {
+          return false;
+        }
       }
     }
-  }
 
-  if (isFinish) {
+    return true;
+  }
+  
+  if (isFinish()) {
     document.getElementById('result').innerText = '恭喜你，拼图已经还原！'
   } else {
     document.getElementById('result').innerText = '';

@@ -5,5 +5,5 @@ const ENV = process.env.ENV;
 module.exports = {
   mode: ENV === 'product' ? 'production' : 'development',
   devtool: ENV === 'dev' ? 'eval-source-map' : '#source-map',
-  plugins: [new CommonConfigWebpackPlugin(), new HtmlWebpackPlugin({title: '九宫格🧩'})],
+  plugins: [new CommonConfigWebpackPlugin(), new HtmlWebpackPlugin({template: 'src/index.html'})],
 };
