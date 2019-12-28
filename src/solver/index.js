@@ -1,23 +1,13 @@
-// TODO：lodash cloneDeep非常慢，需要改用一维数组来表示节点状态
-
-import _ from 'lodash';
 import { aStarPathSearch } from './a-star';
 
 // key为Node的ID，用来排除重复节点
 let KNOWN_NODES = {};
 
 function createNodeFromBoard(board) {
-  const value = [];
+  const value = []
   for (let i=0;i<board.length;++i) {
-    value[i] = [];
     for (let j=0;j<board.length;++j) {
-      value[i][j] = {
-        x: board[i][j].currentXIndex,
-        y: board[i][j].currentYIndex,
-        ox: board[i][j].originalXIndex,
-        oy: board[i][j].originalYIndex,
-        isEmptyPiece: board[i][j].isEmptyPiece
-      };
+      value.push(board[j][i].originalXIndex + board[j][i].originalYIndex*board.length)
     }
   }
 
@@ -25,14 +15,7 @@ function createNodeFromBoard(board) {
 }
 
 function generateIDFromValue(value) {
-  let id = [];
-  for (let i=0;i<value.length;++i) {
-    for (let j=0;j<value.length;++j) {
-      id.push(value[j][i].ox + value[j][i].oy*value.length)
-    }
-  }
-
-  return id.join(',');
+  return value.join(',');
 }
 
 function createNodeFromValue(value) {
@@ -44,18 +27,6 @@ function createNodeFromValue(value) {
   return node;
 }
 
-function swap(p1, p2) {
-  const tmpOX = p2.ox;
-  const tmpOY = p2.oy;
-  const tmpIsEmptyPiece = p2.isEmptyPiece;
-  p2.ox = p1.ox;
-  p2.oy = p1.oy;
-  p2.isEmptyPiece = p1.isEmptyPiece;
-  p1.ox = tmpOX;
-  p1.oy = tmpOY;
-  p1.isEmptyPiece = tmpIsEmptyPiece;
-}
-
 function Node(value, id) {
   this.value = value;
   this.id = id;
@@ -63,44 +34,32 @@ function Node(value, id) {
 
 Node.prototype.getChildren = function () {
   const value = this.value;
-  let emptyX, emptyY;
-  for (let i=0;i<value.length;++i) {
-    for (let j=0;j<value.length;++j) {
-      if (value[i][j].isEmptyPiece) {
-        emptyX = value[i][j].x;
-        emptyY = value[i][j].y;
-        break;
-      }
-    }
+  const emptyIndex = value.findIndex(e => e === 15);
+  function swap(v, i1, i2) {
+    const tmp = v[i1];
+    v[i1] = v[i2];
+    v[i2] = tmp;
   }
 
   const children = [];
-  if (emptyX > 0) {
-    const newValue = _.cloneDeep(value);
-    const left = newValue[emptyX-1][emptyY];
-    const empty = newValue[emptyX][emptyY];
-    swap(left, empty);
+  if (![0,4,8,12].includes(emptyIndex)) {
+    let newValue = value.slice();
+    swap(newValue, emptyIndex, emptyIndex-1);
     children.push(createNodeFromValue(newValue));
   }
-  if (emptyX < value.length-1) {
-    const newValue = _.cloneDeep(value);
-    const right = newValue[emptyX+1][emptyY];
-    const empty = newValue[emptyX][emptyY];
-    swap(right, empty);
+  if (![3,7,11,15].includes(emptyIndex)) {
+    let newValue = value.slice();
+    swap(newValue, emptyIndex, emptyIndex+1);
     children.push(createNodeFromValue(newValue));
   }
-  if (emptyY > 0) {
-    const newValue = _.cloneDeep(value);
-    const up = newValue[emptyX][emptyY-1];
-    const empty = newValue[emptyX][emptyY];
-    swap(up, empty);
+  if (![0,1,2,3].includes(emptyIndex)) {
+    let newValue = value.slice();
+    swap(newValue, emptyIndex, emptyIndex-4);
     children.push(createNodeFromValue(newValue));
   }
-  if (emptyY < value.length-1) {
-    const newValue = _.cloneDeep(value);
-    const down = newValue[emptyX][emptyY+1];
-    const empty = newValue[emptyX][emptyY];
-    swap(down, empty);
+  if (![12,13,14,15].includes(emptyIndex)) {
+    let newValue = value.slice();
+    swap(newValue, emptyIndex, emptyIndex+4);
     children.push(createNodeFromValue(newValue));
   }
 
@@ -108,20 +67,7 @@ Node.prototype.getChildren = function () {
 };
 
 function createFinalNode() {
-  const value = [];
-  for (let i=0;i<4;++i) {
-    value[i] = [];
-    for (let j=0;j<4;++j) {
-      value[i][j] = {
-        x: i,
-        y: j,
-        ox: i,
-        oy: j,
-        isEmptyPiece: i === 3 && j === 3
-      }
-    }
-  }
-
+  const value = [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15];
   return createNodeFromValue(value);
 }
 
@@ -134,28 +80,14 @@ const DIRECTION = {
 
 function findAction(a, b) {
   const aValue = a.value;
-  let emptyAX, emptyAY;
-  for (let i=0;i<aValue.length;++i) {
-    for (let j=0;j<aValue.length;++j) {
-      if (aValue[i][j].isEmptyPiece) {
-        emptyAX = aValue[i][j].x;
-        emptyAY = aValue[i][j].y;
-        break;
-      }
-    }
-  }
+  const emptyAIndex = aValue.findIndex(e => e === 15);
+  const emptyAX = emptyAIndex%4;
+  const emptyAY = Math.floor(emptyAIndex/4);
 
   const bValue = b.value;
-  let emptyBX, emptyBY;
-  for (let i=0;i<bValue.length;++i) {
-    for (let j=0;j<bValue.length;++j) {
-      if (bValue[i][j].isEmptyPiece) {
-        emptyBX = bValue[i][j].x;
-        emptyBY = bValue[i][j].y;
-        break;
-      }
-    }
-  }
+  const emptyBIndex = bValue.findIndex(e => e === 15);
+  const emptyBX = emptyBIndex%4;
+  const emptyBY = Math.floor(emptyBIndex/4);
 
   if (emptyAX === emptyBX+1)
     return DIRECTION.right;
@@ -179,13 +111,12 @@ export function solve(board) {
   const path = aStarPathSearch(from, to, {
     heuristic: function (a) {
       let result = 0;
-      for (let i=0;i<4;++i) {
-        for (let j=0;j<4;++j) {
-          const b = a.value[i][j];
-          const dx = b.x - b.ox;
-          const dy = b.y - b.oy;
-          result += Math.abs(dx) + Math.abs(dy);
-        }
+      for (let k=0;k<a.value.length;++k) {
+        const ox = a.value[k]%4;
+        const oy = Math.floor(a.value[k]/4);
+        const x = k%4;
+        const y = Math.floor(k/4);
+        result += Math.abs(ox-x) + Math.abs(oy-y);
       }
 
       return result;
