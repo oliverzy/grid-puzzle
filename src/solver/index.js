@@ -1,5 +1,5 @@
 import { aStarPathSearch } from './a-star';
-import { idaStarSearch } from './ida-star';
+//import { idaStarSearch } from './ida-star'; // 算法实现简单，但是效率太差
 
 // key为Node的ID，用来排除重复节点
 let KNOWN_NODES = new Map();
@@ -107,36 +107,58 @@ function findAction(a, b) {
 
 /**
  * 尝试A*方法进行搜索求解
+ * 
+ * 对于九宫格，可以一次用算法获得全局最优解也就是最少移动步数
+ * 但是对于十六空格，想一次获得全局最优解耗时过长，不可行
+ * 所以我们通过每次获得部分最优解，最后获得解的策略，这种方式可以快速得到解，但是解不一定是全局最优的
  *
  * return {Array} 获得解的步骤
  */
 export function solve(board) {
   const t0 = performance.now();
   KNOWN_NODES.clear();
-  const from = createNodeFromBoard(board);
+  let from = createNodeFromBoard(board);
   const to = createFinalNode(board.length);
-  const path = aStarPathSearch(from, to, {
-    heuristic: function (a) {
-      let result = 0;
-      const size = board.length;
-      for (let k=0;k<a.value.length;++k) {
-        const ox = a.value[k]%size;
-        const oy = Math.floor(a.value[k]/size);
-        const x = k%size;
-        const y = Math.floor(k/size);
-        result += Math.abs(ox-x) + Math.abs(oy-y);
-      }
+  const startIndex = board.length === 3 ? 9 : 1;
+  let totalPath = [];
+  for (let limit=startIndex;limit<=board.length*board.length;++limit) {
+    console.log('搜索数量限制：', limit);
 
-      return result;
-    }
-  }, 3000);
-  const t1 = performance.now();
-  console.log('搜索状态数量：', KNOWN_NODES.size);
-  console.log(`搜索结果花费了：${t1 - t0}ms`);
-  //console.log(path);
+    const path = aStarPathSearch(from, to, {
+      heuristic: function (a) {
+        let result = 0;
+        const size = board.length;
+        for (let k=0;k<a.value.length;++k) {
+          const ox = a.value[k]%size;
+          const oy = Math.floor(a.value[k]/size);
+          const x = k%size;
+          const y = Math.floor(k/size);
+          result += Math.abs(ox-x) + Math.abs(oy-y);
+        }
+  
+        return result;
+      },
+      goalReached: function (searchNode, targetNode) {
+        for (let i=0;i<limit;++i) {
+          if (searchNode.value[i] !== targetNode.value[i])
+            return false;
+        }
+        from = searchNode;
+        return true;
+      }
+    }, 3000);
+
+    const t1 = performance.now();
+    console.log('搜索状态数量：', KNOWN_NODES.size);
+    console.log(`搜索结果花费了：${t1 - t0}ms`);
+    if (totalPath.length > 0)
+      path.shift();
+    totalPath = totalPath.concat(path);
+  }
+  
   const steps = [];
-  for (let i=0;i<path.length-1;++i) {
-    const step = findAction(path[i], path[i+1]);
+  for (let i=0;i<totalPath.length-1;++i) {
+    const step = findAction(totalPath[i], totalPath[i+1]);
     steps.push(step);
   }
   return steps;
