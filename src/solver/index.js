@@ -1,9 +1,8 @@
-// TODO: 实现IDA*算法来搜索十六宫格 
-// https://algorithmsinsight.wordpress.com/graph-theory-2/ida-star-algorithm-in-general/
 import { aStarPathSearch } from './a-star';
+import { idaStarSearch } from './ida-star';
 
 // key为Node的ID，用来排除重复节点
-let KNOWN_NODES = {};
+let KNOWN_NODES = new Map();
 
 function createNodeFromBoard(board) {
   const value = []
@@ -22,10 +21,10 @@ function generateIDFromValue(value) {
 
 function createNodeFromValue(value) {
   const id = generateIDFromValue(value);
-  if (KNOWN_NODES[id]) return KNOWN_NODES[id];
+  if (KNOWN_NODES.has(id)) return KNOWN_NODES.get(id);
 
   const node = new Node(value, id);
-  KNOWN_NODES[id] = node;
+  KNOWN_NODES.set(id, node);
   return node;
 }
 
@@ -113,7 +112,7 @@ function findAction(a, b) {
  */
 export function solve(board) {
   const t0 = performance.now();
-  KNOWN_NODES = {};
+  KNOWN_NODES.clear();
   const from = createNodeFromBoard(board);
   const to = createFinalNode(board.length);
   const path = aStarPathSearch(from, to, {
@@ -130,9 +129,9 @@ export function solve(board) {
 
       return result;
     }
-  });
+  }, 3000);
   const t1 = performance.now();
-  console.log('搜索状态数量：', Object.keys(KNOWN_NODES).length);
+  console.log('搜索状态数量：', KNOWN_NODES.size);
   console.log(`搜索结果花费了：${t1 - t0}ms`);
   //console.log(path);
   const steps = [];

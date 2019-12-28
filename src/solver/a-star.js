@@ -10,7 +10,7 @@ import { NodeHeap } from './node-heap';
 import { makeSearchStatePool } from './search-state';
 const NO_PATH = [];
 
-export function aStarPathSearch(from, to, options) {
+export function aStarPathSearch(from, to, options, timeLimit) {
   options = options || {};
 
   let heuristic = options.heuristic;
@@ -49,9 +49,10 @@ export function aStarPathSearch(from, to, options) {
   openSet.push(startNode);
   startNode.open = 1;
 
+  const startTime = performance.now();
   let cameFrom;
-
   while (openSet.length > 0) {
+    if (performance.now() - startTime > timeLimit) throw new Error('timeout');
     cameFrom = openSet.pop();
     if (goalReached(cameFrom.node, to)) return reconstructPath(cameFrom);
 

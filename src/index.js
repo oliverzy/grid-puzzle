@@ -16,7 +16,15 @@ const PW = {
  * 初始化游戏
  */
 function initGame() {
-  if (app) app.destroy();
+  if (app) 
+    app.destroy();
+  else {
+    document.getElementById('solve').addEventListener('click', autoComplete);
+    document.getElementById('size').addEventListener('change', e => {
+      SIZE = parseInt(document.getElementById('size').value, 10);
+      newGame();
+    });
+  }
   board = [];
   app = new PIXI.Application({
     width: 900, height: 900, backgroundColor: 0x1099bb, resolution: window.devicePixelRatio || 1,
@@ -25,12 +33,7 @@ function initGame() {
   app.ticker.add((delta) => {
     TWEEN.update();
   });
-  document.getElementById('solve').addEventListener('click', autoComplete);
   SIZE = parseInt(document.getElementById('size').value, 10);
-  document.getElementById('size').addEventListener('change', e => {
-    SIZE = parseInt(document.getElementById('size').value, 10);
-    newGame();
-  });
 
   const container = new PIXI.Container();
   container.sortableChildren = true;
@@ -216,8 +219,8 @@ function randomPieces() {
   }
 
   const newOrder = SIZE === 3 ? _.shuffle([0,1,2,3,4,5,6,7]) :
-    //_.shuffle([0,1,2,3,4,5,6,7,8,9,10,11,12,13,14]);
-    [0,1,2,3,4,5,6,7,8,9,10,12,11,14,13];
+    _.shuffle([0,1,2,3,4,5,6,7,8,9,10,11,12,13,14]);
+    //[0,1,2,3,4,5,6,7,8,9,10,12,11,14,13];
   if (!isSolvable(newOrder))
     return randomPieces();
 
