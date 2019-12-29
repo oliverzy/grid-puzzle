@@ -45,25 +45,25 @@ Node.prototype.getChildren = function () {
 
   const children = [];
   let edge = size === 3 ? [0,3,6] : [0,4,8,12]
-  if (!edge.includes(emptyIndex)) {
+  if (!edge.includes(emptyIndex)) { // right
     let newValue = value.slice();
     swap(newValue, emptyIndex, emptyIndex-1);
     children.push(createNodeFromValue(newValue));
   }
   edge = size === 3 ? [2,5,8] : [3,7,11,15];
-  if (!edge.includes(emptyIndex)) {
+  if (!edge.includes(emptyIndex)) { // left
     let newValue = value.slice();
     swap(newValue, emptyIndex, emptyIndex+1);
     children.push(createNodeFromValue(newValue));
   }
   edge = size === 3 ? [0,1,2] : [0,1,2,3]
-  if (!edge.includes(emptyIndex)) {
+  if (!edge.includes(emptyIndex)) { // up
     let newValue = value.slice();
     swap(newValue, emptyIndex, emptyIndex-size);
     children.push(createNodeFromValue(newValue));
   }
   edge = size === 3 ? [6,7,8] : [12,13,14,15];
-  if (!edge.includes(emptyIndex)) {
+  if (!edge.includes(emptyIndex)) { // down
     let newValue = value.slice();
     swap(newValue, emptyIndex, emptyIndex+size);
     children.push(createNodeFromValue(newValue));
@@ -106,7 +106,7 @@ function findAction(a, b) {
 }
 
 /**
- * 尝试A*方法进行搜索求解
+ * 使用A*方法进行搜索求解
  * 
  * 对于九宫格，可以一次用算法获得全局最优解也就是最少移动步数
  * 但是对于十六空格，想一次获得全局最优解耗时过长，不可行

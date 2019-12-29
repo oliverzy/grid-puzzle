@@ -1,3 +1,8 @@
+/* TODO: 
+ * 1）能够支持基于任意图片上传或者图片URL生成游戏，长方形图片自动基于长边裁剪
+ * 2）展示已经移动的步数 
+ */ 
+
 import _ from 'lodash';
 import * as PIXI from 'pixi.js';
 import TWEEN from "@tweenjs/tween.js";
