@@ -17,6 +17,8 @@ let SIZE = parseInt(document.getElementById('size').value, 10); // 棋盘行列�
 const PW = { 3: 277, 4: 208 }; // 每块的大小
 let isReplay = false; // 是否在自动完成状态
 let app; // 全局PIXI.js Application对象
+let stepText;
+let stepCount = 0;
 
 
 function initApp() {
@@ -53,6 +55,12 @@ function initApp() {
 function newGame() {
   board = [];
   app.stage.removeChildren();
+  stepCount = 0;
+  stepText = new PIXI.Text('已走步数：0',{fontFamily : 'Arial', fontSize: 18, fill : 0xffffff});
+  stepText.anchor.x = 1;
+  stepText.x = 900 - 26.5;
+  stepText.y = 2;
+  app.stage.addChild(stepText);
   const container = new PIXI.Container();
   container.sortableChildren = true;
   container.x = 26.5;
@@ -238,6 +246,8 @@ function move(direction, cb) {
   const tween = new TWEEN.Tween(target);
   tween.to({x: nx*PW[SIZE] + nx*5, y: ny*PW[SIZE] + ny*5}, 300).easing(TWEEN.Easing.Quadratic.Out)
     .onComplete(() => {
+      stepCount++;
+      stepText.text = `已走步数：${stepCount}`;
       checkFinish();
       if (cb) cb();
     });

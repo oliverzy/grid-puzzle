@@ -10,7 +10,7 @@ import { NodeHeap } from './node-heap';
 import { makeSearchStatePool } from './search-state';
 const NO_PATH = [];
 
-export function aStarPathSearch(from, to, options, timeLimit) {
+export function aStarPathSearch(from, to, options, timeLimit = 3000) {
   options = options || {};
 
   let heuristic = options.heuristic;
