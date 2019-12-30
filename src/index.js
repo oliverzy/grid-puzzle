@@ -14,34 +14,38 @@ import { solve } from './solver';
 
 let board = []; // 两维数组，代表整个棋盘, 第一维是列，第二维是行
 let SIZE = parseInt(document.getElementById('size').value, 10); // 棋盘行列数
-const PW = { 3: 277, 4: 208 };
-let isReplay = false;
-const app = new PIXI.Application({
-  width: 900, height: 900, backgroundColor: 0x1099bb, resolution: window.devicePixelRatio || 1,
-  view: document.getElementById('board')
-});
-app.ticker.add((delta) => {
-  TWEEN.update();
-});
-app.loader
-    .add('christmas', christmas)
-    .add('newyear', newyear)
-    .add('tokyo', tokyo)
-    .load((loader, resources) => {
-      newGame();
-    });
-document.getElementById('solve').addEventListener('click', e => {
-  const steps = solve(board);
-  replay(steps);
-});
-document.getElementById('size').addEventListener('change', e => {
-  SIZE = parseInt(document.getElementById('size').value, 10);
-  newGame();
-});
-document.getElementById('new').addEventListener('click', e => {
-  newGame();
-});
+const PW = { 3: 277, 4: 208 }; // 每块的大小
+let isReplay = false; // 是否在自动完成状态
+let app; // 全局PIXI.js Application对象
 
+
+function initApp() {
+  app = new PIXI.Application({
+    width: 900, height: 900, backgroundColor: 0x1099bb, resolution: window.devicePixelRatio || 1,
+    view: document.getElementById('board')
+  });
+  app.ticker.add((delta) => {
+    TWEEN.update();
+  });
+  app.loader
+      .add('christmas', christmas)
+      .add('newyear', newyear)
+      .add('tokyo', tokyo)
+      .load((loader, resources) => {
+        newGame();
+      });
+  document.getElementById('solve').addEventListener('click', e => {
+    const steps = solve(board);
+    replay(steps);
+  });
+  document.getElementById('size').addEventListener('change', e => {
+    SIZE = parseInt(document.getElementById('size').value, 10);
+    newGame();
+  });
+  document.getElementById('new').addEventListener('click', e => {
+    newGame();
+  });
+}
 
 /**
  * 初始化游戏
@@ -293,3 +297,4 @@ function replay(steps) {
   play(0);
 }
 
+initApp();
