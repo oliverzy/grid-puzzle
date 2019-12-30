@@ -44,7 +44,7 @@ Node.prototype.getChildren = function () {
   }
 
   const children = [];
-  let edge = size === 3 ? [0,3,6] : [0,4,8,12]
+  let edge = size === 3 ? [0,3,6] : [0,4,8,12];
   if (!edge.includes(emptyIndex)) { // right
     let newValue = value.slice();
     swap(newValue, emptyIndex, emptyIndex-1);
@@ -56,7 +56,7 @@ Node.prototype.getChildren = function () {
     swap(newValue, emptyIndex, emptyIndex+1);
     children.push(createNodeFromValue(newValue));
   }
-  edge = size === 3 ? [0,1,2] : [0,1,2,3]
+  edge = size === 3 ? [0,1,2] : [0,1,2,3];
   if (!edge.includes(emptyIndex)) { // up
     let newValue = value.slice();
     swap(newValue, emptyIndex, emptyIndex-size);
@@ -107,7 +107,7 @@ function findAction(a, b) {
 
 /**
  * 使用A*方法进行搜索求解
- * 
+ *
  * 对于九宫格，可以一次用算法获得全局最优解也就是最少移动步数
  * 但是对于十六空格，想一次获得全局最优解耗时过长，不可行
  * 所以我们通过每次获得部分最优解，最后获得解的策略，这种方式可以快速得到解，但是解不一定是全局最优的
@@ -135,7 +135,7 @@ export function solve(board) {
           const y = Math.floor(k/size);
           result += Math.abs(ox-x) + Math.abs(oy-y);
         }
-  
+
         return result;
       },
       goalReached: function (searchNode, targetNode) {
@@ -155,7 +155,7 @@ export function solve(board) {
       path.shift();
     totalPath = totalPath.concat(path);
   }
-  
+
   const steps = [];
   for (let i=0;i<totalPath.length-1;++i) {
     const step = findAction(totalPath[i], totalPath[i+1]);

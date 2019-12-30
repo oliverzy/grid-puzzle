@@ -1,6 +1,5 @@
 /* TODO:
  * 1）能够支持基于任意图片上传或者图片URL生成游戏，长方形图片自动基于长边裁剪
- * 2）展示已经移动的步数
  */
 
 import _ from 'lodash';
@@ -12,48 +11,44 @@ import newyear from './newyear.jpeg';
 import tokyo from './tokyo.jpeg';
 import { solve } from './solver';
 
-let app; // PIXI.js主游戏对象
-let board; // 两维数组，代表整个棋盘, 第一维是列，第二维是行
-let SIZE; // 棋盘行列数
-const PW = {
-  3: 277,
-  4: 208
-};
 
-PIXI.Loader.shared
+let board = []; // 两维数组，代表整个棋盘, 第一维是列，第二维是行
+let SIZE = parseInt(document.getElementById('size').value, 10); // 棋盘行列数
+const PW = { 3: 277, 4: 208 };
+let isReplay = false;
+const app = new PIXI.Application({
+  width: 900, height: 900, backgroundColor: 0x1099bb, resolution: window.devicePixelRatio || 1,
+  view: document.getElementById('board')
+});
+app.ticker.add((delta) => {
+  TWEEN.update();
+});
+app.loader
     .add('christmas', christmas)
     .add('newyear', newyear)
     .add('tokyo', tokyo)
     .load((loader, resources) => {
       newGame();
     });
+document.getElementById('solve').addEventListener('click', e => {
+  const steps = solve(board);
+  replay(steps);
+});
+document.getElementById('size').addEventListener('change', e => {
+  SIZE = parseInt(document.getElementById('size').value, 10);
+  newGame();
+});
+document.getElementById('new').addEventListener('click', e => {
+  newGame();
+});
+
 
 /**
  * 初始化游戏
  */
-function initGame() {
-  if (app)
-    app.destroy();
-  else {
-    document.getElementById('solve').addEventListener('click', autoComplete);
-    document.getElementById('size').addEventListener('change', e => {
-      SIZE = parseInt(document.getElementById('size').value, 10);
-      newGame();
-    });
-    document.getElementById('new').addEventListener('click', e => {
-      newGame();
-    });
-  }
+function newGame() {
   board = [];
-  app = new PIXI.Application({
-    width: 900, height: 900, backgroundColor: 0x1099bb, resolution: window.devicePixelRatio || 1,
-    view: document.getElementById('board')
-  });
-  app.ticker.add((delta) => {
-    TWEEN.update();
-  });
-  SIZE = parseInt(document.getElementById('size').value, 10);
-
+  app.stage.removeChildren();
   const container = new PIXI.Container();
   container.sortableChildren = true;
   container.x = 26.5;
@@ -73,8 +68,8 @@ function initGame() {
     return piece;
   }
 
-  const builtInImages = Object.keys(PIXI.Loader.shared.resources);
-  const baseTexture = PIXI.Loader.shared.resources[builtInImages[_.random(0, builtInImages.length-1)]].texture;
+  const builtInImages = Object.keys(app.loader.resources);
+  const baseTexture = app.loader.resources[builtInImages[_.random(0, builtInImages.length-1)]].texture;
   for (let i=0;i<SIZE;++i) {
     board[i] = [];
     for (let j=0;j<SIZE;++j) {
@@ -102,6 +97,57 @@ function initGame() {
       }
     }
   }
+
+  randomPieces();
+}
+
+/**
+ * 打乱图形
+ */
+function randomPieces() {
+  // 检查逆序数，必须是偶数才有解
+  // https://blog.csdn.net/weixin_42438777/article/details/84723308
+  function isSolvable(order) {
+    let count = 0;
+    for (let i=0;i<order.length;++i) {
+      for (let j=i+1;j<order.length;++j) {
+        if (order[i] > order[j])
+          count++;
+      }
+    }
+
+    console.log('排列：', order, count);
+    return count % 2 === 0;
+  }
+
+  const newOrder = SIZE === 3 ? _.shuffle([0,1,2,3,4,5,6,7]) :
+      _.shuffle([0,1,2,3,4,5,6,7,8,9,10,11,12,13,14]);
+  //[0,1,2,3,4,5,6,7,8,9,10,12,11,14,13];
+  if (!isSolvable(newOrder))
+    return randomPieces();
+
+  newOrder.push(SIZE*SIZE-1);
+  const newBoard = [];
+  for (let i=0;i<board.length;++i)
+    newBoard.push([]);
+  let newi = 0;
+  let newj = 0;
+  for (let k=0;k<newOrder.length;++k) {
+    const i = newOrder[k]%SIZE;
+    const j = Math.floor(newOrder[k]/SIZE);
+    const piece = board[i][j];
+    piece.x = newi*PW[SIZE] + newi*5;
+    piece.y = newj*PW[SIZE] + newj*5;
+    piece.currentXIndex = newi;
+    piece.currentYIndex = newj;
+    newBoard[newi][newj] = piece;
+    newi++;
+    if (newi === SIZE) {
+      newi = 0;
+      newj++;
+    }
+  }
+  board = newBoard;
 }
 
 const DIRECTION = {
@@ -117,6 +163,7 @@ const DIRECTION = {
  * @param target 被点击的对象
  */
 function handleClick({target}) {
+  if (isReplay) return;
   function whereToMove() {
     let cx = target.currentXIndex;
     let cy = target.currentYIndex;
@@ -223,62 +270,15 @@ function checkFinish() {
   }
 }
 
-/**
- * 打乱图形
- */
-function randomPieces() {
-  // 检查逆序数，必须是偶数才有解
-  // https://blog.csdn.net/weixin_42438777/article/details/84723308
-  function isSolvable(order) {
-    let count = 0;
-    for (let i=0;i<order.length;++i) {
-      for (let j=i+1;j<order.length;++j) {
-        if (order[i] > order[j])
-          count++;
-      }
-    }
-
-    console.log('排列：', order, count);
-    return count % 2 === 0;
-  }
-
-  const newOrder = SIZE === 3 ? _.shuffle([0,1,2,3,4,5,6,7]) :
-    _.shuffle([0,1,2,3,4,5,6,7,8,9,10,11,12,13,14]);
-    //[0,1,2,3,4,5,6,7,8,9,10,12,11,14,13];
-  if (!isSolvable(newOrder))
-    return randomPieces();
-
-  newOrder.push(SIZE*SIZE-1);
-  const newBoard = [];
-  for (let i=0;i<board.length;++i)
-    newBoard.push([]);
-  let newi = 0;
-  let newj = 0;
-  for (let k=0;k<newOrder.length;++k) {
-    const i = newOrder[k]%SIZE;
-    const j = Math.floor(newOrder[k]/SIZE);
-    const piece = board[i][j];
-    piece.x = newi*PW[SIZE] + newi*5;
-    piece.y = newj*PW[SIZE] + newj*5;
-    piece.currentXIndex = newi;
-    piece.currentYIndex = newj;
-    newBoard[newi][newj] = piece;
-    newi++;
-    if (newi === SIZE) {
-      newi = 0;
-      newj++;
-    }
-  }
-  board = newBoard;
-}
-
 function replay(steps) {
   console.log('移动步骤：', steps);
+  isReplay = true;
   document.getElementById('solve').setAttribute('disabled', 'disabled');
   document.getElementById('size').setAttribute('disabled', 'disabled');
   document.getElementById('new').setAttribute('disabled', 'disabled');
   function play(index) {
     if (index === steps.length) {
+      isReplay = false;
       document.getElementById('solve').removeAttribute('disabled');
       document.getElementById('size').removeAttribute('disabled');
       document.getElementById('new').removeAttribute('disabled');
@@ -293,12 +293,3 @@ function replay(steps) {
   play(0);
 }
 
-function autoComplete() {
-  const steps = solve(board);
-  replay(steps);
-}
-
-function newGame() {
-  initGame();
-  randomPieces();
-}
