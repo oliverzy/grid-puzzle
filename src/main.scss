@@ -13,15 +13,24 @@ body {
   color: red;
 }
 
+.button-container {
+  display: flex;
+  margin-bottom: 5px;
+}
+
 #size {
-  width: 49%;
   font-size: 18px;
+  width: 33%
 }
 
 #solve {
   text-align: center;
   cursor: pointer;
-  width: 49%;
   font-size: 18px;
-  margin-bottom: 5px;
+  width: 33%;
+}
+
+#new {
+  font-size: 18px;
+  width: 33%
 }

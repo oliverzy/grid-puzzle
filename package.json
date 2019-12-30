@@ -5,8 +5,8 @@
   "main": "src/index.js",
   "scripts": {
     "dev": "ENV=dev webpack-dev-server",
-    "build": "ENV=dev webpack",
-    "build:prod": "ENV=product webpack"
+    "build": "ENV=product webpack",
+    "build:dev": "ENV=dev webpack"
   },
   "author": "",
   "license": "ISC",
