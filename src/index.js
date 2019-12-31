@@ -2,9 +2,9 @@ import _ from 'lodash';
 import * as PIXI from 'pixi.js';
 import TWEEN from "@tweenjs/tween.js";
 import './main.scss';
-import christmas from './christmas.png';
-import newyear from './newyear.jpeg';
-import tokyo from './tokyo.jpeg';
+import christmas from './assets/christmas.png';
+import newyear from './assets/newyear.jpeg';
+import tokyo from './assets/tokyo.jpeg';
 import { solve } from './solver';
 
 

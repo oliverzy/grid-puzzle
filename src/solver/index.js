@@ -5,7 +5,7 @@ import { aStarPathSearch } from './a-star';
 let KNOWN_NODES = new Map();
 
 function createNodeFromBoard(board) {
-  const value = []
+  const value = [];
   for (let i=0;i<board.length;++i) {
     for (let j=0;j<board.length;++j) {
       value.push(board[j][i].originalXIndex + board[j][i].originalYIndex*board.length)
