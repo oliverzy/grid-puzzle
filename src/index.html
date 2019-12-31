@@ -4,6 +4,28 @@
     <meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <title>X宫格拼图</title>
+    <script>
+      window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)};
+      ga('create', 'UA-19538586-4', 'auto');
+      ga('set', 'transport', 'beacon');
+      ga('set', 'page', 'X宫格拼图');
+      ga('send', 'pageview');
+
+      window.addEventListener('error', function (event) {
+        ga('send', {
+          hitType: 'event',
+          eventCategory: 'Uncaught Error',
+          eventAction: (event.error && event.error.stack) || event.message || '(not set)',
+          nonInteraction: true
+        });
+      });
+      window.addEventListener('load', function () {
+        var s = document.createElement('script');
+        s.async = true;
+        s.src = 'https://www.google-analytics.com/analytics.js';
+        document.head.appendChild(s);
+      });
+    </script>
   </head>
   <body>
     <canvas id="board"></canvas>
@@ -16,5 +38,6 @@
       <button id="solve">自动完成</button>
     </div>
     <div id="result"></div>
+    自定义拼图图片：<input id="custom" type="file" accept="image/*">
   </body>
 </html>

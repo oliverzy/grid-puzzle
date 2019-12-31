@@ -1,7 +1,3 @@
-/* TODO:
- * 1）能够支持基于任意图片上传或者图片URL生成游戏，长方形图片自动基于长边裁剪
- */
-
 import _ from 'lodash';
 import * as PIXI from 'pixi.js';
 import TWEEN from "@tweenjs/tween.js";
@@ -17,10 +13,13 @@ let SIZE = parseInt(document.getElementById('size').value, 10); // 棋盘行列�
 const PW = { 3: 277, 4: 208 }; // 每块的大小
 let isReplay = false; // 是否在自动完成状态
 let app; // 全局PIXI.js Application对象
-let stepText;
-let stepCount = 0;
+let stepText; // 移动步数精灵
+let stepCount = 0; // 移动步数
+let customImg; // 用户选择的图片
 
-
+/**
+ * 初始化游戏，只会调用一次
+ */
 function initApp() {
   app = new PIXI.Application({
     width: 900, height: 900, backgroundColor: 0x1099bb, resolution: window.devicePixelRatio || 1,
@@ -47,10 +46,20 @@ function initApp() {
   document.getElementById('new').addEventListener('click', e => {
     newGame();
   });
+  document.getElementById('custom').addEventListener('change', e => {
+    const img = new Image();
+    const objectURL = window.URL.createObjectURL(e.target.files[0]);
+    img.src = objectURL;
+    img.onload = function() {
+      window.URL.revokeObjectURL(objectURL);
+      customImg = img;
+      newGame();
+    };
+  });
 }
 
 /**
- * 初始化游戏
+ * 开始新游戏，会多次调用
  */
 function newGame() {
   board = [];
@@ -67,6 +76,10 @@ function newGame() {
   container.y = 26.5;
   app.stage.addChild(container);
 
+  const builtInImages = Object.keys(app.loader.resources);
+  const baseTexture = customImg ? PIXI.BaseTexture.from(customImg)
+      : app.loader.resources[builtInImages[_.random(0, builtInImages.length-1)]].texture;
+
   function createPiece(i, j, texture) {
     const piece = new PIXI.Sprite(texture);
     piece.x = i*PW[SIZE] + i*5;
@@ -80,8 +93,30 @@ function newGame() {
     return piece;
   }
 
-  const builtInImages = Object.keys(app.loader.resources);
-  const baseTexture = app.loader.resources[builtInImages[_.random(0, builtInImages.length-1)]].texture;
+  function calculateFrame(i, j) {
+    const imgWidth = baseTexture.width;
+    const imgHeight = baseTexture.height;
+    let x, y, width, height;
+    if (imgWidth > imgHeight) {
+      x = (imgWidth - imgHeight)/2;
+      y = 0;
+      width = imgHeight;
+      height = imgHeight;
+    } else if (imgWidth < imgHeight) {
+      x = 0;
+      y = (imgHeight - imgWidth)/2;
+      width = imgWidth;
+      height = imgWidth;
+    } else {
+      x = 0;
+      y = 0;
+      width = imgWidth;
+      height = imgHeight;
+    }
+
+    return new PIXI.Rectangle(x+i*width/SIZE, y+j*height/SIZE, width/SIZE, height/SIZE);
+  }
+
   for (let i=0;i<SIZE;++i) {
     board[i] = [];
     for (let j=0;j<SIZE;++j) {
@@ -97,9 +132,7 @@ function newGame() {
         container.addChild(piece);
         board[i][j] = piece;
       } else {
-        const textureSize = baseTexture.width/SIZE;
-        const texture = new PIXI.Texture(baseTexture,
-            new PIXI.Rectangle(i*textureSize,j*textureSize, textureSize, textureSize));
+        const texture = new PIXI.Texture(baseTexture, calculateFrame(i, j));
         const piece = createPiece(i, j, texture);
         piece.interactive = true;
         piece.buttonMode = true;
@@ -195,6 +228,9 @@ function handleClick({target}) {
   move(direction);
 }
 
+/**
+ * 移动一格图片
+ */
 function move(direction, cb) {
   //console.log('can move:', direction);
   if (direction === DIRECTION.none)
@@ -263,6 +299,9 @@ function move(direction, cb) {
   board[cx][cy] = empty;
 }
 
+/**
+ * 是否已完成拼图
+ */
 function checkFinish() {
   function isFinish() {
     for (let i=0;i<board.length;++i) {
@@ -284,6 +323,9 @@ function checkFinish() {
   }
 }
 
+/**
+ * 自动完成拼图
+ */
 function replay(steps) {
   console.log('移动步骤：', steps);
   isReplay = true;
@@ -306,5 +348,6 @@ function replay(steps) {
   }
   play(0);
 }
+
 
 initApp();
