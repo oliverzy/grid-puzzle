@@ -34,6 +34,7 @@ function initApp() {
       .add('newyear', newyear)
       .add('tokyo', tokyo)
       .load((loader, resources) => {
+        enableButtons();
         newGame();
       });
   document.getElementById('solve').addEventListener('click', e => {
@@ -54,7 +55,7 @@ function initApp() {
     img.onload = function() {
       handleImageOrientation(img, outputImg => {
         if (outputImg) {
-          customImg = outputImg instanceof PIXI.RenderTexture ? outputImg : PIXI.BaseTexture.from(outputImg);
+          customImg = outputImg;
           newGame();
         } else
           alert('不支持的图片转向！');
@@ -62,8 +63,6 @@ function initApp() {
       });
     };
   });
-
-  enableButtons();
 }
 
 /**
@@ -76,8 +75,8 @@ function initApp() {
 function handleImageOrientation(img, cb) {
   EXIF.getData(img, function () {
     const orientation = EXIF.getTag(this, 'Orientation');
-    if (orientation === undefined || orientation === 1)
-      return cb(img);
+    if (orientation === undefined || orientation === 1 || orientation === 0)
+      return cb(PIXI.BaseTexture.from(img));
 
     // 1. 等比缩放
     let spriteWidth, spriteHeight;
