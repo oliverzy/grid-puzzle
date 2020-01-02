@@ -37,6 +37,7 @@ function initApp() {
         enableButtons();
         newGame();
       });
+      
   document.getElementById('solve').addEventListener('click', e => {
     const steps = solve(board);
     replay(steps);
