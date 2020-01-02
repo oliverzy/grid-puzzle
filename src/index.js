@@ -1,6 +1,7 @@
 import _ from 'lodash';
 import * as PIXI from 'pixi.js';
 import TWEEN from "@tweenjs/tween.js";
+import EXIF from 'exif-js';
 import './main.scss';
 import christmas from './assets/christmas.png';
 import newyear from './assets/newyear.jpeg';
@@ -51,10 +52,72 @@ function initApp() {
     const objectURL = window.URL.createObjectURL(e.target.files[0]);
     img.src = objectURL;
     img.onload = function() {
-      window.URL.revokeObjectURL(objectURL);
-      customImg = img;
-      newGame();
+      handleImageOrientation(img, outputImg => {
+        if (outputImg) {
+          customImg = outputImg instanceof PIXI.RenderTexture ? outputImg : PIXI.BaseTexture.from(outputImg);
+          newGame();
+        } else
+          alert('不支持的图片转向！');
+        window.URL.revokeObjectURL(objectURL);
+      });
     };
+  });
+
+  enableButtons();
+}
+
+/**
+ * 处理手机相机拍摄导致的图片转向问题
+ * https://segmentfault.com/a/1190000009990033
+ *
+ * @param img Image对象
+ * @param cb
+ */
+function handleImageOrientation(img, cb) {
+  EXIF.getData(img, function () {
+    const orientation = EXIF.getTag(this, 'Orientation');
+    if (orientation === undefined || orientation === 1)
+      return cb(img);
+
+    // 1. 等比缩放
+    let spriteWidth, spriteHeight;
+    const ratio = img.width / img.height;
+    if(img.width > img.height && img.width > 900) {
+      spriteWidth = 900;
+      spriteHeight = Math.ceil(900 / ratio);
+    } else if(img.width < img.height && img.height > 900) {
+      spriteWidth = Math.ceil(900 * ratio);
+      spriteHeight = 900;
+    } else {
+      spriteWidth = spriteHeight = 900;
+    }
+    // 2. 旋转
+    const sprite = PIXI.Sprite.from(img);
+    sprite.width = spriteWidth;
+    sprite.height = spriteHeight;
+    if (orientation === 6) {
+      sprite.angle = 90;
+      sprite.x = sprite.height;
+    } else if (orientation === 8) {
+      sprite.angle = -90;
+      sprite.y = sprite.width;
+    } else if (orientation === 3) {
+      sprite.angle = 180;
+      sprite.x = sprite.width;
+      sprite.y = sprite.height;
+    } else {
+      console.error('不支持的图片转向！');
+      return cb(null);
+    }
+    // 3. 渲染到RenderTexture
+    const renderTexture = PIXI.RenderTexture.create({
+      width: orientation === 6 || orientation === 8 ? spriteHeight : spriteWidth,
+      height: orientation === 6 || orientation === 8 ? spriteWidth : spriteHeight,
+      resolution: window.devicePixelRatio || 1});
+    app.renderer.render(sprite, renderTexture);
+    return cb(renderTexture);
+    //const newSprite = PIXI.Sprite.from(renderTexture);
+    //app.stage.addChild(newSprite);
   });
 }
 
@@ -77,7 +140,7 @@ function newGame() {
   app.stage.addChild(container);
 
   const builtInImages = Object.keys(app.loader.resources);
-  const baseTexture = customImg ? PIXI.BaseTexture.from(customImg)
+  const baseTexture = customImg ? customImg
       : app.loader.resources[builtInImages[_.random(0, builtInImages.length-1)]].texture;
 
   function createPiece(i, j, texture) {
@@ -323,21 +386,30 @@ function checkFinish() {
   }
 }
 
+function disableButtons() {
+  document.getElementById('solve').setAttribute('disabled', 'disabled');
+  document.getElementById('size').setAttribute('disabled', 'disabled');
+  document.getElementById('new').setAttribute('disabled', 'disabled');
+  document.getElementById('custom').setAttribute('disabled', 'disabled');
+}
+
+function enableButtons() {
+  document.getElementById('solve').removeAttribute('disabled');
+  document.getElementById('size').removeAttribute('disabled');
+  document.getElementById('new').removeAttribute('disabled');
+  document.getElementById('custom').removeAttribute('disabled');
+}
 /**
  * 自动完成拼图
  */
 function replay(steps) {
   console.log('移动步骤：', steps);
   isReplay = true;
-  document.getElementById('solve').setAttribute('disabled', 'disabled');
-  document.getElementById('size').setAttribute('disabled', 'disabled');
-  document.getElementById('new').setAttribute('disabled', 'disabled');
+  disableButtons();
   function play(index) {
     if (index === steps.length) {
       isReplay = false;
-      document.getElementById('solve').removeAttribute('disabled');
-      document.getElementById('size').removeAttribute('disabled');
-      document.getElementById('new').removeAttribute('disabled');
+      enableButtons();
       return;
     }
     move(steps[index], () => {

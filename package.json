@@ -12,6 +12,7 @@
   "license": "ISC",
   "dependencies": {
     "@tweenjs/tween.js": "^18.5.0",
+    "exif-js": "^2.3.0",
     "lodash": "^4.17.15",
     "pixi.js": "^5.2.0"
   },

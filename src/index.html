@@ -30,14 +30,14 @@
   <body>
     <canvas id="board"></canvas>
     <div class="button-container">
-      <select id="size">
+      <select id="size" disabled>
         <option value="3">九宫格</option>
         <option value="4">十六宫格</option>
       </select>
-      <button id="new">新游戏</button>
-      <button id="solve">自动完成</button>
+      <button id="new" disabled>新游戏</button>
+      <button id="solve" disabled>自动完成</button>
     </div>
+    <div class="file-container">自定义拼图图片：<input id="custom" type="file" accept="image/*" disabled></div>
     <div id="result"></div>
-    自定义拼图图片：<input id="custom" type="file" accept="image/*">
   </body>
 </html>
