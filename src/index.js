@@ -37,7 +37,7 @@ function initApp() {
         enableButtons();
         newGame();
       });
-      
+
   document.getElementById('solve').addEventListener('click', e => {
     const steps = solve(board);
     replay(steps);
@@ -126,7 +126,9 @@ function handleImageOrientation(img, cb) {
  */
 function newGame() {
   board = [];
-  app.stage.removeChildren();
+  while (app.stage.children.length > 0) {
+    app.stage.children[0].destroy({children: true, texture: true, baseTexture: false});
+  }
   stepCount = 0;
   stepText = new PIXI.Text('已走步数：0',{fontFamily : 'Arial', fontSize: 18, fill : 0xffffff});
   stepText.anchor.x = 1;
@@ -199,7 +201,7 @@ function newGame() {
         const piece = createPiece(i, j, texture);
         piece.interactive = true;
         piece.buttonMode = true;
-        piece.on('pointerdown', handleClick);
+        piece.on('pointertap', handleClick);
         container.addChild(piece);
         board[i][j] = piece;
       }
