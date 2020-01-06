@@ -9,6 +9,8 @@ module.exports = {
   output: {
     path: path.resolve(__dirname, 'public'),
     publicPath: '/',
+    filename: '[name].[chunkhash].js',
+    chunkFilename: '[name].[chunkhash].js',
   },
   plugins: [new CommonConfigWebpackPlugin(), new HtmlWebpackPlugin({template: 'src/index.html'})],
 };
