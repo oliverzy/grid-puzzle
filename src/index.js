@@ -7,16 +7,19 @@ import christmas from './assets/christmas.png';
 import newyear from './assets/newyear.jpeg';
 import tokyo from './assets/tokyo.jpeg';
 import { solve } from './solver';
+import { makeFireworks } from './fireworks';
 
 
 let board = []; // 两维数组，代表整个棋盘, 第一维是列，第二维是行
 let SIZE = parseInt(document.getElementById('size').value, 10); // 棋盘行列数
 const PW = { 3: 277, 4: 208 }; // 每块的大小
 let isReplay = false; // 是否在自动完成状态
-let app; // 全局PIXI.js Application对象
+let app; // PIXI.js Application对象
+let container; // 棋盘容器
 let stepText; // 移动步数精灵
 let stepCount = 0; // 移动步数
 let customImg; // 用户选择的图片
+let fireworks; // 烟火效果
 
 /**
  * 初始化游戏，只会调用一次
@@ -64,6 +67,8 @@ function initApp() {
       });
     };
   });
+
+  fireworks = makeFireworks(app);
 }
 
 /**
@@ -126,16 +131,17 @@ function handleImageOrientation(img, cb) {
  */
 function newGame() {
   board = [];
-  while (app.stage.children.length > 0) {
-    app.stage.children[0].destroy({children: true, texture: true, baseTexture: false});
-  }
+  if (stepText)
+    stepText.destroy();
   stepCount = 0;
   stepText = new PIXI.Text('已走步数：0',{fontFamily : 'Arial', fontSize: 18, fill : 0xffffff});
   stepText.anchor.x = 1;
   stepText.x = 900 - 26.5;
   stepText.y = 2;
   app.stage.addChild(stepText);
-  const container = new PIXI.Container();
+  if (container)
+    container.destroy({children: true, texture: true, baseTexture: false});
+  container = new PIXI.Container();
   container.sortableChildren = true;
   container.x = 26.5;
   container.y = 26.5;
@@ -209,6 +215,7 @@ function newGame() {
   }
 
   randomPieces();
+  fireworks.stop();
 }
 
 /**
@@ -382,7 +389,8 @@ function checkFinish() {
   }
 
   if (isFinish()) {
-    document.getElementById('result').innerText = '恭喜你，拼图已经还原！'
+    document.getElementById('result').innerText = '恭喜你，拼图已经还原！';
+    fireworks.play();
   } else {
     document.getElementById('result').innerText = '';
   }
