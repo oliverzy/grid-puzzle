@@ -1,7 +1,7 @@
+// 参考实现：https://editor.p5js.org/codingtrain/sketches/O2M0SO-WO
 import _ from 'lodash';
 import * as PIXI from 'pixi.js';
 import randomColor from 'randomcolor';
-import Color from 'color';
 
 const gravity = {x: 0, y: 0.2};
 
@@ -63,7 +63,7 @@ class Particle {
 class Firework {
   constructor(g, width, height) {
     this.g = g;
-    this.color = (new Color(randomColor({luminosity: 'light'}))).rgbNumber();
+    this.color = PIXI.utils.string2hex(randomColor({luminosity: 'light'}));
     this.firework = new Particle(g, _.random(0, width), height, this.color, true);
     this.exploded = false;
     this.particles = [];
