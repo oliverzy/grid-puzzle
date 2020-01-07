@@ -25,11 +25,7 @@ class Particle {
   }
 
   done() {
-    if (this.lifespan < 0) {
-      return true;
-    } else {
-      return false;
-    }
+    return this.lifespan < 0;
   }
 
   applyForce(force) {
@@ -70,11 +66,7 @@ class Firework {
   }
 
   done() {
-    if (this.exploded && this.particles.length === 0) {
-      return true;
-    } else {
-      return false;
-    }
+    return this.exploded && this.particles.length === 0;
   }
 
   update() {
@@ -98,7 +90,7 @@ class Firework {
   }
 
   explode() {
-    for (let i = 0; i < 50; i++) {
+    for (let i = 0; i < 100; i++) {
       const p = new Particle(this.g, this.firework.x, this.firework.y, this.color, false);
       this.particles.push(p);
     }
@@ -120,13 +112,13 @@ export function makeFireworks(app) {
   const fireworks = [];
 
   function play() {
-    console.log('放烟花');
+    //console.log('放烟花');
     app.stage.addChild(graphic);
     app.ticker.add(update);
   }
 
   function stop() {
-    console.log('结束放烟花');
+    //console.log('结束放烟花');
     app.ticker.remove(update);
     app.stage.removeChild(graphic);
   }
