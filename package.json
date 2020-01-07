@@ -1,14 +1,14 @@
 {
   "name": "grid-puzzle",
   "version": "1.0.0",
-  "description": "",
+  "description": "x宫格游戏",
   "main": "src/index.js",
   "scripts": {
     "dev": "ENV=dev webpack-dev-server",
     "build": "ENV=product webpack",
     "build:dev": "ENV=dev webpack"
   },
-  "author": "",
+  "author": "zhouyujie",
   "license": "ISC",
   "dependencies": {
     "@tweenjs/tween.js": "^18.5.0",
