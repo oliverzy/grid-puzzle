@@ -4,6 +4,11 @@
       "src": "/static/(.*)",
       "headers": { "cache-control": "max-age=2592000" },
       "dest": "/static/$1"
+    },
+    {
+      "src": "/((.*)\\.(js|css)$)",
+      "headers": { "cache-control": "max-age=2592000" },
+      "dest": "/$1"
     }
   ]
 }
