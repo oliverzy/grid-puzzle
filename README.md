@@ -1,7 +1,7 @@
 # grid-puzzle
 x宫格拼图
 
-线上地址：https://grid-puzzle.now.sh/
+线上地址：https://puzzle.xiake.dev/
 
 此项目主要目的是用来探索搜索算法
 1. 广度优先A*搜索
